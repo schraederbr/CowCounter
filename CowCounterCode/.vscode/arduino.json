@@ -1,0 +1,5 @@
+{
+    "sketch": "CowCounterCode.ino",
+    "board": "arduboy:avr:arduboy",
+    "port": "COM5"
+}
