@@ -8,10 +8,10 @@ Arduboy2 ab;
 #define RIGHT_PLAYER_BUTTON B_BUTTON
 #define LEFT_PLAYER_BUTTON A_BUTTON
 #define EEPROM_START 512
-//May need to start using longs as some point
-int RightScore = 0;
-int LeftScore = 0;
-int CowCache = 0;
+//May need to start using longs as some polong
+long RightScore = 0;
+long LeftScore = 0;
+long CowCache = 0;
 void setup(){
 	ab.begin();
 	ab.clear();
@@ -31,12 +31,12 @@ void resetScores(){
 //May need to change to longs, so + 4 apart
 void readScores(){
     RightScore = EEPROM.get(EEPROM_START, RightScore);
-    LeftScore = EEPROM.get(EEPROM_START + 2, LeftScore);
+    LeftScore = EEPROM.get(EEPROM_START + 4, LeftScore);
 }
 
 void saveScores(){
     EEPROM.put(EEPROM_START, RightScore);
-    EEPROM.put(EEPROM_START + 2, LeftScore);
+    EEPROM.put(EEPROM_START + 4, LeftScore);
 }
 
 void drawScores(){
@@ -44,11 +44,11 @@ void drawScores(){
     drawScoreBig(RightScore, 2, 64, 3);
 }
 
-void drawScoreBig(int score, int textScale, int x, int y){
+void drawScoreBig(long score, long textScale, long x, long y){
     drawScoreBig(String(score), textScale, x, y);
 }
 
-void drawScoreBig(String score, int textScale, int x, int y){
+void drawScoreBig(String score, long textScale, long x, long y){
     ab.setCursor(x,y);
     ab.setTextSize(textScale);
     ab.print(score);
@@ -57,7 +57,7 @@ void drawScoreBig(String score, int textScale, int x, int y){
 
 // Number roller, like a bike lock
 // Assuming a 5x7 default font
-void drawSelectBox(int i, int textScale, int x, int y){
+void drawSelectBox(long i, long textScale, long x, long y){
     ab.setCursor(x,y);
     //Might want to use drawRoundRect eventually
     //This doesn't currently scale with textScale exactly
@@ -65,20 +65,20 @@ void drawSelectBox(int i, int textScale, int x, int y){
     ab.display();
 }
 
-int digitCount(int num){
+long digitCount(long num){
     String str = String(num);
     return str.length();
 }
 
 
-void addCows(int& score){
-    int maxDigits = 9;
-    int x = 96;
-    int y = 32;
-    int textScale = 2;
-    int selectIndex = 1;
+void addCows(long& score){
+    long maxDigits = 9;
+    long x = 96;
+    long y = 32;
+    long textScale = 2;
+    long selectIndex = 1;
     String prevScore;
-    int prevIndex;
+    long prevIndex;
     String scoreString = "+" + String(0);
     ab.clear();
     drawScoreBig(scoreString, textScale, x, y);
@@ -138,29 +138,31 @@ void display(){
     ab.display();
 }
 
-void drawMenuBox(int i){
+void drawMenuBox(long i){
     ab.drawRect(0 + (i * 42),0,42,64);
     ab.drawBitmap(0,0,Graveyard, 42, 64);
     ab.drawBitmap(42,0,Church,42,64);
     ab.display();
 }
 
-void church(int& score){
+void church(long& score){
     score = score * 2;
+    saveScores();
 }
 
-void graveYard(int& score){
+void graveYard(long& score){
     score = score / 2;
+    saveScores();
 }
 
 #define ADD_INDEX 0
 #define CHURCH_INDEX 1
 #define GRAVEYARD_INDEX 2
 
-void menu(int& score){
+void menu(long& score){
     ab.clear();
-    int selectIndex = 0;
-    int prevIndex = selectIndex;
+    long selectIndex = 0;
+    long prevIndex = selectIndex;
     drawMenuBox(selectIndex);
     while(true){
         ab.pollButtons();
@@ -199,7 +201,7 @@ void menu(int& score){
     }
 }
 
-int resetCounter = 0;
+long resetCounter = 0;
 void loop()
 {
 	if (!ab.nextFrame()) return;
@@ -212,8 +214,8 @@ void loop()
         resetCounter = 0;
         display();
     }
-    int rightOld = RightScore;
-    int leftOld = LeftScore;
+    long rightOld = RightScore;
+    long leftOld = LeftScore;
 	
     if(rightOld != RightScore || leftOld != LeftScore){
         display();
