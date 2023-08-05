@@ -3,13 +3,14 @@
 
 #include <Arduboy2.h>
 #include <EEPROM.h>
+#include "sprites.h"
 Arduboy2 ab;
-#define BEN_BUTTON B_BUTTON
-#define ABBY_BUTTON A_BUTTON
-#define BACK_BUTTON LEFT_BUTTON
+#define RIGHT_PLAYER_BUTTON B_BUTTON
+#define LEFT_PLAYER_BUTTON A_BUTTON
 #define EEPROM_START 512
-int BenScore = 0;
-int AbbyScore = 0;
+//May need to start using longs as some point
+int RightScore = 0;
+int LeftScore = 0;
 int CowCache = 0;
 void setup(){
 	ab.begin();
@@ -22,28 +23,25 @@ void setup(){
 }
 
 void resetScores(){
-    BenScore = 0;
-    AbbyScore = 0;
+    RightScore = 0;
+    LeftScore = 0;
     saveScores();
 }
 
+//May need to change to longs, so + 4 apart
 void readScores(){
-    BenScore = EEPROM.get(EEPROM_START, BenScore);
-    AbbyScore = EEPROM.get(EEPROM_START + 2, AbbyScore);
+    RightScore = EEPROM.get(EEPROM_START, RightScore);
+    LeftScore = EEPROM.get(EEPROM_START + 2, LeftScore);
 }
 
 void saveScores(){
-    EEPROM.put(EEPROM_START, BenScore);
-    EEPROM.put(EEPROM_START + 2, AbbyScore);
+    EEPROM.put(EEPROM_START, RightScore);
+    EEPROM.put(EEPROM_START + 2, LeftScore);
 }
 
 void drawScores(){
-    drawScoreBig(AbbyScore, 2, 3, 3);
-    drawScoreBig(BenScore, 2, 64, 3);
-    // ab.setCursor(3,3);
-    // ab.print(AbbyScore);
-    // ab.setCursor(64,3);
-    // ab.print(BenScore);
+    drawScoreBig(LeftScore, 2, 3, 3);
+    drawScoreBig(RightScore, 2, 64, 3);
 }
 
 void drawScoreBig(int score, int textScale, int x, int y){
@@ -63,7 +61,7 @@ void drawSelectBox(int i, int textScale, int x, int y){
     ab.setCursor(x,y);
     //Might want to use drawRoundRect eventually
     //This doesn't currently scale with textScale exactly
-    ab.drawRect((x - 1) + (i * 6 * textScale), y - 3, textScale * 6, textScale * 10);
+    ab.drawRect((x - 2) + (i * 6 * textScale), y - 3, textScale * 6 + 2, textScale * 10);
     ab.display();
 }
 
@@ -73,14 +71,15 @@ int digitCount(int num){
 }
 
 
-void addCows(int button, int& score){
+void addCows(int& score){
+    int maxDigits = 9;
     int x = 96;
     int y = 32;
     int textScale = 2;
-    int selectIndex = 0;
+    int selectIndex = 1;
     String prevScore;
     int prevIndex;
-    String scoreString = String(0);
+    String scoreString = "+" + String(0);
     ab.clear();
     drawScoreBig(scoreString, textScale, x, y);
     drawSelectBox(selectIndex, textScale, x, y);
@@ -88,14 +87,14 @@ void addCows(int button, int& score){
         prevScore = scoreString;
         prevIndex = selectIndex;
         ab.pollButtons();
-        if(ab.justPressed(button)){
+        if(ab.justPressed(LEFT_PLAYER_BUTTON) || ab.justPressed(RIGHT_PLAYER_BUTTON)){
             score = score + scoreString.toInt();
             saveScores();
             break;
         }
         else if(ab.justPressed(LEFT_BUTTON)){
-            if(selectIndex == 0 && scoreString.length() < 8){
-                scoreString = "0" + scoreString;
+            if(selectIndex == 0 && scoreString.length() < maxDigits){
+                scoreString = scoreString.substring(0, 1) + "0" + scoreString.substring(1);
                 x = x - (ab.getCharacterWidth(textScale) + ab.getCharacterSpacing(textScale));
             }
             else{
@@ -105,7 +104,16 @@ void addCows(int button, int& score){
         else if(ab.justPressed(RIGHT_BUTTON)){
             selectIndex++;
         }
+        if(selectIndex == 0 && (ab.justPressed(UP_BUTTON) || ab.justPressed(DOWN_BUTTON))){
+            if(scoreString[selectIndex] == '+'){
+                scoreString[selectIndex] = '-';
+            }
+            else{
+                scoreString[selectIndex] = '+';
+            }
+        }
         else if(ab.justPressed(UP_BUTTON)){
+            
             scoreString[selectIndex] = ((scoreString[selectIndex] - '0') + 1) % 10 + '0'; 
         }
         else if(ab.justPressed(DOWN_BUTTON)){
@@ -130,10 +138,72 @@ void display(){
     ab.display();
 }
 
+void drawMenuBox(int i){
+    ab.drawRect(0 + (i * 42),0,42,64);
+    ab.drawBitmap(0,0,Graveyard, 42, 64);
+    ab.drawBitmap(42,0,Church,42,64);
+    ab.display();
+}
+
+void church(int& score){
+    score = score * 2;
+}
+
+void graveYard(int& score){
+    score = score / 2;
+}
+
+#define ADD_INDEX 0
+#define CHURCH_INDEX 1
+#define GRAVEYARD_INDEX 2
+
+void menu(int& score){
+    ab.clear();
+    int selectIndex = 0;
+    int prevIndex = selectIndex;
+    drawMenuBox(selectIndex);
+    while(true){
+        ab.pollButtons();
+        prevIndex = selectIndex;
+        if(ab.justPressed(RIGHT_BUTTON)){
+            selectIndex++;
+        }
+        else if(ab.justPressed(LEFT_BUTTON)){
+            selectIndex--;
+        }
+        if(selectIndex > 2){
+            selectIndex = 0;
+        }
+        else if(selectIndex < 0){
+            selectIndex = 2;
+        }
+        if(selectIndex != prevIndex){
+            ab.clear();
+            drawMenuBox(selectIndex);
+        }
+        if(ab.justPressed(A_BUTTON) || ab.justPressed(B_BUTTON)){
+            if(selectIndex == ADD_INDEX){
+                addCows(score);
+                break;
+            }
+            else if(selectIndex == CHURCH_INDEX){
+                church(score);
+                break;
+            }
+            else if(selectIndex == GRAVEYARD_INDEX){
+                graveYard(score);
+                break;
+            }
+
+        }
+    }
+}
+
 int resetCounter = 0;
 void loop()
 {
 	if (!ab.nextFrame()) return;
+    ab.pollButtons();
     if(ab.pressed(LEFT_BUTTON | RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON)){
         resetCounter++;
     }
@@ -142,28 +212,20 @@ void loop()
         resetCounter = 0;
         display();
     }
-    int benOld = BenScore;
-    int abbyOld = AbbyScore;
-	ab.pollButtons();
-    if(benOld != BenScore || abbyOld != AbbyScore){
+    int rightOld = RightScore;
+    int leftOld = LeftScore;
+	
+    if(rightOld != RightScore || leftOld != LeftScore){
         display();
     }
     
-    if(ab.justPressed(ABBY_BUTTON)){
-        addCows(ABBY_BUTTON, AbbyScore);
+    if(ab.justPressed(LEFT_PLAYER_BUTTON)){
+        menu(LeftScore);
         display();
     }
-    else if(ab.justPressed(BEN_BUTTON)){
-        addCows(BEN_BUTTON, BenScore);
+    else if(ab.justPressed(RIGHT_PLAYER_BUTTON)){
+        menu(RightScore);
         display();
     }
 	
 }
-
-// void saveScore(){
-//     int highScore = EEPROM.read(EEPROM_START);
-//     if(turn > highScore){
-//         EEPROM.update(EEPROM_START, turn);
-//     }
-// }
-
