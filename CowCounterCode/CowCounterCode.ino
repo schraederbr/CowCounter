@@ -40,8 +40,15 @@ void saveScores(){
 }
 
 void drawScores(){
-    drawScoreBig(LeftScore, 2, 3, 3);
-    drawScoreBig(RightScore, 2, 64, 3);
+    int textScale = 2;
+    if(digitCount(LeftScore) > 5 || digitCount(RightScore) > 5){
+        textScale = 1;
+    }
+    else{
+        textScale = 2;
+    }
+    drawScoreBig(LeftScore, textScale, 0, 0);
+    drawScoreBig(RightScore, textScale, 68, 0);
 }
 
 void drawScoreBig(long score, long textScale, long x, long y){
@@ -139,9 +146,10 @@ void display(){
 }
 
 void drawMenuBox(long i){
-    ab.drawRect(0 + (i * 42),0,42,64);
-    ab.drawBitmap(0,0,Graveyard, 42, 64);
+    ab.drawRoundRect(0 + (i * 42),0,42,64,6);
+    ab.drawBitmap(0,0,Cow, 42, 64);
     ab.drawBitmap(42,0,Church,42,64);
+    ab.drawBitmap(84,0,Graveyard,42,64);
     ab.display();
 }
 
