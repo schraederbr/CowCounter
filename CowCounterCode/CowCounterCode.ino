@@ -11,6 +11,7 @@ Arduboy2 ab;
 
 long RightScore = 0;
 long LeftScore = 0;
+long Multiplier = 1;
 
 const Point ADD_POINT = {0,0};
 const Point CHURCH_POINT = {1,0};
@@ -183,6 +184,25 @@ void delivery(long& thief, long& victim){
 }
 
 // Need function for normalizing cows, so that actual cows are worth getting
+
+void normalize(){ 
+    int sharedDigits = 0;
+    int left = String(LeftScore).length();
+    int right = String(RightScore).length();
+    if(left > right){
+        sharedDigits = left - (left - right);
+    }
+    else{
+        sharedDigits = right + (left - right);
+    }
+    if(sharedDigits > 3){
+        // Or I could bit shift and do this with binary digits, so that there isn't rounding
+        LeftScore = LeftScore / (pow(10, sharedDigits));
+        RightScore = RightScore / (pow(10, sharedDigits));
+        Multiplier = Multiplier * (pow(10, sharedDigits));
+    }
+
+}
 
 bool checkPoint(Point a, Point b){
     return a.x == b.x && a.y == b.y;
