@@ -60,10 +60,28 @@ void drawScoreBig(long score, long textScale, long x, long y){
     drawScoreBig(String(score), textScale, x, y);
 }
 
+String insertStringToString(String original, String toInsert, int position) { 
+    String newString = original.substring(0, position);
+    newString += toInsert;
+    newString += original.substring(position);
+    return newString;
+}
+
+String addCommas(String original) {
+    int len = original.length();
+    for(int i = len - 3; i > 0; i -= 3) {
+        original = insertStringToString(original, ",", i);
+    }
+    return original;
+}
+
+//Maybe instead of adding commas to the string, just draw commas below the numbers, 
+//not modifying the string
 void drawScoreBig(String score, long textScale, long x, long y){
     ab.setCursor(x,y);
     ab.setTextSize(textScale);
-    ab.print(score);
+    ab.print(addCommas(score));
+    // ab.print(score);
     ab.display();
 }
 
@@ -82,7 +100,7 @@ long digitCount(long num){
     return str.length();
 }
 
-
+//Need to automatically skip the commas
 void addCows(long& score){
     long maxDigits = 9;
     long x = 96;
