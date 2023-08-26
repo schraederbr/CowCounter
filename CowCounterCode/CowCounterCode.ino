@@ -175,10 +175,14 @@ void drawIconSprite(uint8_t icon[], Point position, int width, int height){
     Sprites::drawOverwrite(position.x * 128/width, position.y * 64/height, icon,0);
 }
 
+void drawIconCompressed(uint8_t icon[], Point position, int width, int height){
+    ab.drawCompressed(position.x * 128/width, position.y * 64/height, icon);
+}
+
 void drawMenuBox(int x, int y, int width, int height){
-    drawIconSprite(CowHalfHeight, ADD_POINT, width, height);
-    drawIconSprite(ChurchHalfHeight, CHURCH_POINT, width, height);
-    drawIconSprite(GraveyardHalfHeight, GRAVEYARD_POINT, width, height);
+    drawIconCompressed(CowHalfHeight, ADD_POINT, width, height);
+    drawIconCompressed(ChurchHalfHeight, CHURCH_POINT, width, height);
+    drawIconCompressed(GraveyardHalfHeight, GRAVEYARD_POINT, width, height);
     ab.drawRect((x * 128/width),(y*64/height),128/width,64/height);
     ab.display();
 }
