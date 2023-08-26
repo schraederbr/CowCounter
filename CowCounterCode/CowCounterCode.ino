@@ -80,8 +80,7 @@ String addCommas(String original) {
 void drawScoreBig(String score, long textScale, long x, long y){
     ab.setCursor(x,y);
     ab.setTextSize(textScale);
-    ab.print(addCommas(score));
-    // ab.print(score);
+    ab.print(score);
     ab.display();
 }
 
@@ -168,15 +167,19 @@ void display(){
     ab.display();
 }
 
-void drawIcon(uint8_t icon[], Point position, int width, int height){
+void drawIconBitmap(uint8_t icon[], Point position, int width, int height){
     ab.drawBitmap(position.x * 128/width,position.y * 64/height, icon, 128/width, 64/height);
 }
 
-//Need to convert this to 2 layers. Also, shouldn't hard code the 42 and 64
+void drawIconSprite(uint8_t icon[], Point position, int width, int height){
+    Sprites::drawOverwrite(position.x * 128/width, position.y * 64/height, icon,0);
+}
+
 void drawMenuBox(int x, int y, int width, int height){
+    drawIconSprite(CowHalfHeight, ADD_POINT, width, height);
+    drawIconSprite(ChurchHalfHeight, CHURCH_POINT, width, height);
+    drawIconSprite(GraveyardHalfHeight, GRAVEYARD_POINT, width, height);
     ab.drawRect((x * 128/width),(y*64/height),128/width,64/height);
-    drawIcon(Graveyard, GRAVEYARD_POINT, width, height);
-    drawIcon(Church, CHURCH_POINT, width, height);
     ab.display();
 }
 
