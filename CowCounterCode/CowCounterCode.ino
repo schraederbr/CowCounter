@@ -18,12 +18,12 @@ long RightScore = 0;
 long LeftScore = 0;
 long Multiplier = 1;
 
-const Point ADD_POINT = {0,0};
+const Point ADD_POINT = {2,1};
 const Point CHURCH_POINT = {1,0};
 const Point GRAVEYARD_POINT = {2,0};
 const Point DELIVERY_POINT = {0,1};
 const Point NORMALIZE_POINT = {1,1};
-const Point BACK_POINT = {2,1};
+const Point BACK_POINT = {0,0};
 
 //I could create an Icon struct that has the sprite, the position, width, height
 
@@ -35,7 +35,6 @@ void setup(){
     readScores();
     drawScores();
     ab.display();
-    drawCode();
 }
 
 void resetScores(){
@@ -331,19 +330,31 @@ void drawCode(){
      ab.clear();
 
     uint8_t qrcodeData[qrcode_getBufferSize(3)];
-    qrcode_initText(&qrcode, qrcodeData, 3, 0, (String(LeftScore) + String(RightScore) + String(Multiplier)).c_str());
-//    qrcode_initBytes(&qrcode, qrcodeData, 3, 0, "https://example.com", 20);
+    String codeString = "P1:" + String(LeftScore) + "," + "P2:" + String(RightScore) + "," + "M:" + String(Multiplier) + ",";
+    int version = 3;
+    int sc = 2;
+    if(codeString.length() > 61){
+      version = 4;
+    }
+    if(version > 3){
+      sc = 1;
+    }
+    qrcode_initText(&qrcode, qrcodeData, version, 1, codeString.c_str());
 
     for (uint8_t y = 0; y < qrcode.size; y++) {
         for (uint8_t x = 0; x < qrcode.size; x++) {
             if (qrcode_getModule(&qrcode, x, y)) {
-                ab.fillRect(x*2, y*2, 2, 2, WHITE);
+                ab.fillRect(x*sc, y*sc, sc, sc, WHITE);
             }
         }
     }
 
     ab.display();
     while(true){
+        ab.pollButtons();
+        if(ab.pressed(RIGHT_PLAYER_BUTTON & LEFT_PLAYER_BUTTON)){
+            break;
+        }
     }
 }
 
@@ -351,7 +362,7 @@ void loop()
 {
 	if (!ab.nextFrame()) return;
     ab.pollButtons();
-    if(ab.pressed(LEFT_BUTTON | RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON)){
+    if(ab.pressed(UP_BUTTON | DOWN_BUTTON)){
         resetCounter++;
     }
     if(resetCounter > 60){
@@ -365,7 +376,7 @@ void loop()
     if(rightOld != RightScore || leftOld != LeftScore){
         display();
     }
-    
+
     if(ab.justPressed(LEFT_PLAYER_BUTTON)){
         menu(LeftScore, RightScore);
         display();
@@ -373,6 +384,9 @@ void loop()
     else if(ab.justPressed(RIGHT_PLAYER_BUTTON)){
         menu(RightScore, LeftScore);
         display();
+    }
+    if(ab.pressed(LEFT_BUTTON | RIGHT_BUTTON)){
+        drawCode();
     }
 	
 }
