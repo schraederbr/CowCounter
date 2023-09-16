@@ -2,12 +2,17 @@
 // arduino-cli compile --fqbn arduboy:avr:arduboy .\CowCounterCode.ino --output-dir .\build\
 
 #include <Arduboy2.h>
+#include <qrcode.h>
 #include <EEPROM.h>
 #include "sprites.h"
 Arduboy2 ab;
 #define RIGHT_PLAYER_BUTTON B_BUTTON
 #define LEFT_PLAYER_BUTTON A_BUTTON
 #define EEPROM_START 1008
+QRCode qrcode;
+
+
+
 
 long RightScore = 0;
 long LeftScore = 0;
@@ -30,6 +35,7 @@ void setup(){
     readScores();
     drawScores();
     ab.display();
+    drawCode();
 }
 
 void resetScores(){
@@ -320,6 +326,27 @@ void menu(long& score, long& otherScore){
 }
 
 long resetCounter = 0;
+
+void drawCode(){
+     ab.clear();
+
+    uint8_t qrcodeData[qrcode_getBufferSize(3)];
+    qrcode_initText(&qrcode, qrcodeData, 3, 0, (String(LeftScore) + String(RightScore) + String(Multiplier)).c_str());
+//    qrcode_initBytes(&qrcode, qrcodeData, 3, 0, "https://example.com", 20);
+
+    for (uint8_t y = 0; y < qrcode.size; y++) {
+        for (uint8_t x = 0; x < qrcode.size; x++) {
+            if (qrcode_getModule(&qrcode, x, y)) {
+                ab.fillRect(x*2, y*2, 2, 2, WHITE);
+            }
+        }
+    }
+
+    ab.display();
+    while(true){
+    }
+}
+
 void loop()
 {
 	if (!ab.nextFrame()) return;
