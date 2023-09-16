@@ -7,7 +7,7 @@
 Arduboy2 ab;
 #define RIGHT_PLAYER_BUTTON B_BUTTON
 #define LEFT_PLAYER_BUTTON A_BUTTON
-#define EEPROM_START 512
+#define EEPROM_START 1008
 
 long RightScore = 0;
 long LeftScore = 0;
@@ -17,6 +17,10 @@ const Point ADD_POINT = {0,0};
 const Point CHURCH_POINT = {1,0};
 const Point GRAVEYARD_POINT = {2,0};
 const Point DELIVERY_POINT = {0,1};
+const Point NORMALIZE_POINT = {1,1};
+const Point BACK_POINT = {2,1};
+
+//I could create an Icon struct that has the sprite, the position, width, height
 
 void setup(){
 	ab.begin();
@@ -31,33 +35,39 @@ void setup(){
 void resetScores(){
     RightScore = 0;
     LeftScore = 0;
+    Multiplier = 1;
     saveScores();
 }
 
 void readScores(){
     RightScore = EEPROM.get(EEPROM_START, RightScore);
     LeftScore = EEPROM.get(EEPROM_START + 4, LeftScore);
+    Multiplier = EEPROM.get(EEPROM_START + 8, Multiplier);
 }
 
 void saveScores(){
     EEPROM.put(EEPROM_START, RightScore);
     EEPROM.put(EEPROM_START + 4, LeftScore);
+    EEPROM.put(EEPROM_START + 8, Multiplier);
 }
 
 void drawScores(){
     int textScale = 2;
-    if(digitCount(LeftScore) > 5 || digitCount(RightScore) > 5){
+    if(digitCount(LeftScore) > 5 || digitCount(RightScore) > 5 || digitCount(Multiplier) > 9){
         textScale = 1;
     }
     else{
         textScale = 2;
     }
-    drawScoreBig(LeftScore, textScale, 0, 0);
-    drawScoreBig(RightScore, textScale, 68, 0);
+    drawNumBig(LeftScore, textScale, 0, 0);
+    drawNumBig(RightScore, textScale, 68, 0);
+    ab.setCursor(16 - (8 * textScale), 48);
+    ab.print("x");
+    drawNumBig(Multiplier, textScale, 16, 48);
 }
 
-void drawScoreBig(long score, long textScale, long x, long y){
-    drawScoreBig(String(score), textScale, x, y);
+void drawNumBig(long score, long textScale, long x, long y){
+    drawNumBig(String(score), textScale, x, y);
 }
 
 String insertStringToString(String original, String toInsert, int position) { 
@@ -77,7 +87,7 @@ String addCommas(String original) {
 
 //Maybe instead of adding commas to the string, just draw commas below the numbers, 
 //not modifying the string
-void drawScoreBig(String score, long textScale, long x, long y){
+void drawNumBig(String score, long textScale, long x, long y){
     ab.setCursor(x,y);
     ab.setTextSize(textScale);
     ab.print(score);
@@ -110,7 +120,7 @@ void addCows(long& score){
     long prevIndexX;
     String scoreString = "+" + String(0);
     ab.clear();
-    drawScoreBig(scoreString, textScale, x, y);
+    drawNumBig(scoreString, textScale, x, y);
     drawSelectBox(selectIndexX, textScale, x, y);
     while(true){
         prevScore = scoreString;
@@ -155,7 +165,7 @@ void addCows(long& score){
         selectIndexX = selectIndexX % scoreString.length();
         if(scoreString != prevScore || selectIndexX != prevIndexX){
             ab.clear();
-            drawScoreBig(scoreString, textScale, x, y);
+            drawNumBig(scoreString, textScale, x, y);
             drawSelectBox(selectIndexX, textScale, x, y);
         }
     }
@@ -167,22 +177,17 @@ void display(){
     ab.display();
 }
 
-void drawIconBitmap(uint8_t icon[], Point position, int width, int height){
-    ab.drawBitmap(position.x * 128/width,position.y * 64/height, icon, 128/width, 64/height);
-}
-
-void drawIconSprite(uint8_t icon[], Point position, int width, int height){
-    Sprites::drawOverwrite(position.x * 128/width, position.y * 64/height, icon,0);
-}
-
 void drawIconCompressed(uint8_t icon[], Point position, int width, int height){
     ab.drawCompressed(position.x * 128/width, position.y * 64/height, icon);
 }
 
 void drawMenuBox(int x, int y, int width, int height){
-    drawIconCompressed(CowHalfHeight, ADD_POINT, width, height);
-    drawIconCompressed(ChurchHalfHeight, CHURCH_POINT, width, height);
-    drawIconCompressed(GraveyardHalfHeight, GRAVEYARD_POINT, width, height);
+    drawIconCompressed(Cow, ADD_POINT, width, height);
+    drawIconCompressed(Church, CHURCH_POINT, width, height);
+    drawIconCompressed(Graveyard, GRAVEYARD_POINT, width, height);
+    drawIconCompressed(Delivery, DELIVERY_POINT, width, height);
+    drawIconCompressed(Normalize, NORMALIZE_POINT, width, height);
+    drawIconCompressed(Back, BACK_POINT, width, height);
     ab.drawRect((x * 128/width),(y*64/height),128/width,64/height);
     ab.display();
 }
@@ -212,21 +217,28 @@ void delivery(long& thief, long& victim){
 
 void normalize(){ 
     int sharedDigits = 0;
-    int left = String(LeftScore).length();
-    int right = String(RightScore).length();
+    String leftString = String(LeftScore);
+    String rightString = String(RightScore);
+    int left = leftString.length();
+    int right = rightString.length();
     if(left > right){
-        sharedDigits = left - (left - right);
+        while(right > 2){
+            right--;
+            LeftScore = LeftScore/10;
+            RightScore = RightScore/10;
+            Multiplier *= 10;
+        }
     }
-    else{
-        sharedDigits = right + (left - right);
-    }
-    if(sharedDigits > 3){
-        // Or I could bit shift and do this with binary digits, so that there isn't rounding
-        LeftScore = LeftScore / (pow(10, sharedDigits));
-        RightScore = RightScore / (pow(10, sharedDigits));
-        Multiplier = Multiplier * (pow(10, sharedDigits));
+    else if(left < right){
+        while(left > 2){
+            left--;
+            LeftScore = LeftScore/10;
+            RightScore = RightScore/10;
+            Multiplier *= 10;
+        }
     }
 
+    saveScores();
 }
 
 bool checkPoint(Point a, Point b){
@@ -275,6 +287,11 @@ bool triggerMenu(Point index, long& score, long& otherScore){
     }
     else if(checkPoint(index,DELIVERY_POINT)){
         delivery(score, otherScore);
+        return true;
+    }
+    else if(checkPoint(index,NORMALIZE_POINT)){
+        normalize();
+        return true;
     }
 }
 
