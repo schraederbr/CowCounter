@@ -339,12 +339,13 @@ void drawCode(){
     if(version > 3){
       sc = 1;
     }
+    ab.fillRect(0,0,128,64,WHITE);
     qrcode_initText(&qrcode, qrcodeData, version, 1, codeString.c_str());
 
     for (uint8_t y = 0; y < qrcode.size; y++) {
         for (uint8_t x = 0; x < qrcode.size; x++) {
             if (qrcode_getModule(&qrcode, x, y)) {
-                ab.fillRect(x*sc, y*sc, sc, sc, WHITE);
+                ab.fillRect(x*sc + 1, y*sc + 1, sc, sc, BLACK);
             }
         }
     }
